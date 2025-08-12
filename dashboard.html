@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bhawana Bank - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+        }
+        .navbar {
+            background-color: #1a365d;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .nav-actions a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            background-color: rgba(255,255,255,0.1);
+            transition: background-color 0.2s;
+        }
+        .nav-actions a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        .main-content {
+            margin-top: 5rem;
+            padding: 2rem;
+        }
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .analysis-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .stat-item {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .stat-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .stat-value {
+            color: #1a365d;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #1a365d;
+            transition: transform 0.2s;
+        }
+        .activity-item:hover {
+            transform: translateX(4px);
+        }
+        .activity-item.alert {
+            border-left-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .activity-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .activity-details {
+            flex: 1;
+        }
+        .activity-details > div:first-child {
+            color: #1a365d;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        .activity-time {
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+        .dashboard-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 1rem;
+        }
+        .card-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a365d;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .metric {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .metric-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a365d;
+        }
+        .card-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        .chart {
+            text-align: center;
+        }
+        .chart h3 {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: #1a365d;
+            color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+        .toast.error {
+            background: #dc2626;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        #securityAlerts {
+            background-color: #fff5f5;
+            border-left: 4px solid #fc8181;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Bhawana Bank Dashboard</h1>
+        <div class="nav-actions">
+            <a href="index.html">Go to Login →</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span style="font-size: 1.5rem;">📊</span>
+                    <h2>Model Performance</h2>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-label">Accuracy</span>
+                        <span class="metric-value" id="accuracy">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Precision</span>
+                        <span class="metric-value" id="precision">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Recall</span>
+                        <span class="metric-value" id="recall">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">F1 Score</span>
+                        <span class="metric-value" id="f1">Loading...</span>
+                    </div>
+                </div>
+                <div class="card-charts">
+                    <div class="chart">
+                        <h3>Model Performance Metrics</h3>
+                        <canvas id="metricsChart" style="width: 100%; height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card" id="securityAlerts">
+                <div class="card-header">
+                    <span style="font-size: 1.5rem;">🚨</span>
+                    <h2>Security Alerts</h2>
+                </div>
+                <div class="activity-list" id="alertsList">
+                    <div class="no-alerts" style="text-align: center; padding: 1rem; color: #718096;">
+                        No security alerts
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span style="font-size: 1.5rem;">👥</span>
+                    <h2>Recent Activity</h2>
+                </div>
+                <div class="activity-list" id="activityList">
+                    <div class="no-activity" style="text-align: center; padding: 1rem; color: #718096;">
+                        No recent activity
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span style="font-size: 1.5rem;">📊</span>
+                    <h2>Dataset Analysis</h2>
+                </div>
+                <div class="analysis-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Queries</span>
+                        <span class="stat-value">22,599</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Safe Queries</span>
+                        <span class="stat-value">11,308</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">SQL Injections</span>
+                        <span class="stat-value">11,291</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Training Size</span>
+                        <span class="stat-value">15,817</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let metricsChart;
+        
+        async function fetchModelMetrics() {
+            try {
+                const response = await fetch('http://localhost:5000/model-metrics');
+                const data = await response.json();
+                document.getElementById('accuracy').textContent = `${(data.accuracy * 100).toFixed(2)}%`;
+                document.getElementById('precision').textContent = `${(data.precision * 100).toFixed(2)}%`;
+                document.getElementById('recall').textContent = `${(data.recall * 100).toFixed(2)}%`;
+                document.getElementById('f1').textContent = `${(data.f1_score * 100).toFixed(2)}%`;
+
+                // Update the bar chart
+                const ctx = document.getElementById('metricsChart').getContext('2d');
+                const metrics = {
+                    labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+                    values: [
+                        data.accuracy * 100,
+                        data.precision * 100,
+                        data.recall * 100,
+                        data.f1_score * 100
+                    ]
+                };
+
+                if (metricsChart) {
+                    metricsChart.destroy();
+                }
+
+                metricsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: metrics.labels,
+                        datasets: [{
+                            label: 'Model Performance (%)',
+                            data: metrics.values,
+                            backgroundColor: [
+                                'rgba(26, 54, 93, 0.8)',
+                                'rgba(49, 130, 206, 0.8)',
+                                'rgba(66, 153, 225, 0.8)',
+                                'rgba(144, 205, 244, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgb(26, 54, 93)',
+                                'rgb(49, 130, 206)',
+                                'rgb(66, 153, 225)',
+                                'rgb(144, 205, 244)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 99.5,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Percentage (%)'
+                                },
+                                ticks: {
+                                    stepSize: 0.1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching metrics:', error);
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function updateSecurityAlerts() {
+            const alertsList = document.getElementById('alertsList');
+            const alerts = JSON.parse(localStorage.getItem('security_alerts') || '[]');
+            if (alerts.length === 0) {
+                alertsList.innerHTML = `<div class="no-alerts" style="text-align: center; padding: 1rem; color: #718096;">No security alerts</div>`;
+                return;
+            }
+            alertsList.innerHTML = '';
+            alerts.forEach(alert => {
+                const alertItem = document.createElement('div');
+                alertItem.className = 'activity-item alert';
+                alertItem.innerHTML = `
+                    <div class="activity-icon">⚠️</div>
+                    <div class="activity-details">
+                        <div>${alert.details}</div>
+                        <div class="activity-time">Username: ${alert.username}</div>
+                        <div class="activity-time">${formatTimestamp(alert.timestamp)}</div>
+                    </div>
+                `;
+                alertsList.appendChild(alertItem);
+            });
+        }
+
+        function updateActivityList() {
+            const activityList = document.getElementById('activityList');
+            const logins = JSON.parse(localStorage.getItem('successful_logins') || '[]');
+            if (logins.length === 0) {
+                activityList.innerHTML = `<div class="no-activity" style="text-align: center; padding: 1rem; color: #718096;">No recent activity</div>`;
+                return;
+            }
+            activityList.innerHTML = '';
+            logins.forEach(login => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.innerHTML = `
+                    <div class="activity-icon">👤</div>
+                    <div class="activity-details">
+                        <div>Successful login by ${login.username}</div>
+                        <div class="activity-time">${formatTimestamp(login.timestamp)}</div>
+                    </div>
+                `;
+                activityList.appendChild(activityItem);
+            });
+        }
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'security_alerts' || e.key === 'successful_logins') {
+                updateSecurityAlerts();
+                updateActivityList();
+            }
+        });
+
+        function initDashboard() {
+            fetchModelMetrics();
+            updateSecurityAlerts();
+            updateActivityList();
+            setInterval(() => {
+                updateSecurityAlerts();
+                updateActivityList();
+            }, 30000);
+        }
+
+        window.addEventListener('load', initDashboard);
+    </script>
+</body>
+</html>
